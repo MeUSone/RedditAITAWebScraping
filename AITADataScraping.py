@@ -49,7 +49,7 @@ for submission in subreddit.hot(limit=10):
 print("sample comment")
 print(document["comment"][1])
 
-#Try one post from AITAFilted to see if we could repreduce the Judgement Form (No could not do it. Reason need to be investigated)
+#Try one post from AITAFilted to see if we could reproduce the Judgement Form (No could not do it. Reason need to be investigated)
 submission = reddit.submission(url="https://www.reddit.com/r/AmItheAsshole/comments/pjda60/aita_for_wanting_a_phone_jail_at_my_wedding/")
 
 dt= {'title':[],'story':[],'comment':[],'JudgeForm':[],'UpvoteNumberForToppestNTA':[],'UpvoteNumberForToppestESH':[],'UpvoteNumberForToppestYTA':[],'UpvoteNumberForToppestINFO':[],
