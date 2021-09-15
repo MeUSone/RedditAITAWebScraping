@@ -45,4 +45,4 @@ for submission in subreddit.hot(limit=1000):
     AITAFiltered.append({"Original_Post":submission.url,"JudgementForm":cleanText,"FinalResult":cleanText[0].split(":")[1]})
 print(AITAFiltered)
 dfAITAFiltered = pd.DataFrame(AITAFiltered)
-dfAITAFiltered.to_csv('Posts.csv')
+dfAITAFiltered.to_csv('Posts_Raw.csv')
