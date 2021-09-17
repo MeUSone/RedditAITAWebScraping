@@ -1,7 +1,7 @@
-import praw
-import pprint
-import datetime
-import pandas as pd
+
+- refactor into using firebase
+- start running a script using a function
+
 
 reddit = praw.Reddit(
     client_id="BBADp-gSLgP2aeQyVh-Q9A",
@@ -90,3 +90,11 @@ df.groupby('Judgement')['upvotes'].nlargest().reset_index()
 #371+1+9+11
 #According to the judgement form the toppest comment is 371YTA and it is 54%, then the NTA(28%) should be 192 upvotes
 #but I could not find one such comment even when I mutrually looking at the original post
+
+ref = db.reference("/")
+ref.set({
+	"Books":
+	{
+		"Best_Sellers": -1
+	}
+})
