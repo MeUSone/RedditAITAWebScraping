@@ -14,13 +14,15 @@ reddit = praw.Reddit(
 
 data_reddit = [[]]*len(df.index)
 
-for reddit_url in range(0,2):
+for reddit_url in range(0,len(df)):
     submission = reddit.submission(url=df["Post_url"][reddit_url])
 
     total_votes = 0
     judgement = {"NTA": 0, "YTA": 0, "NAH": 0, "INFO": 0, "ESH": 0}
 
     for top_level_comment in submission.comments:
+        if hasattr(top_level_comment,"body")==False:
+            continue
         if "NTA" in top_level_comment.body:
             if top_level_comment.ups > 0:
                 total_votes += top_level_comment.ups
@@ -47,10 +49,16 @@ for reddit_url in range(0,2):
                     "ESH": judgement["ESH"]/total_votes}
     data = list(custom_score.items())
 
+    data = sorted(data, key=lambda x: x[1],reverse=True)
+
     data_reddit[reddit_url] = data
 
 df["Custom Score"] = data_reddit
 df.drop('Unnamed: 0', axis=1, inplace=True)
-
-print(df)
+abbreviation_form={" Not the A-hole":"NTA"," Asshole":"YTA"," Not Enough Info":"INFO"," Everyone Sucks":"ESH"," No A-holes":"NAH"}
+temp = []
+for a in range(len(df)):
+    temp.append(df["Custom Score"][a][0][0] == abbreviation_form.get(df["FinalResult"][a]))
+df["Same Label"] = temp
+df.to_csv("Post.csv")
 
