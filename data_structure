@@ -1,0 +1,7 @@
+{INT_ID: {"post_id": INT, "title": STRING, "date": STRING, "id": STRING, "url": STRING,
+"flair": STRING, scoresFromAITAFiltered: {"YTA": INT, "NTA": INT, "ESH": INT, "NAH": INT, "INFO": INT},
+scoresCustom: {"YTA": INT, "NTA": INT, "ESH": INT, "NAH": INT, "INFO": INT}
+comments: []}}
+
+# refactor all the code to fit the data structure and fill info in
+# run Kendall Correlation on everythign

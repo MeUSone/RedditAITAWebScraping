@@ -16,7 +16,7 @@ reddit = praw.Reddit(
 
 subreddit = reddit.subreddit("AITAFiltered")
 AITAFiltered = []
-for submission in subreddit.hot(limit=1000):
+for submission in subreddit.hot(limit=2):
 
     # Get rid of the rule post
     if submission.stickied:
@@ -43,6 +43,16 @@ for submission in subreddit.hot(limit=1000):
     del cleanText[2]
     AITAFiltered.append({"Original_Post": submission.url, "JudgementForm": cleanText,
                          "FinalResult": cleanText[0].split(":")[1]})
+
+    # print(cleanText)
+    # data = {}
+    #
+    # for i in range(0, len(cleanText)):
+    #     print(cleanText[i][0:cleanText[i].index(" ")])
+    #     if "NTA" in cleanText[i] or "YTA" in cleanText[i] or "ESH" in cleanText[i] or "NAH" in cleanText[i] or "INFO" in cleanText[i]:
+    #         data[cleanText[i][0:cleanText[i].index(" ")]] = cleanText[i][cleanText[i].index(" ")+1:len(cleanText[i])-1]
+    #
+    # print(data)
 
 # print(AITAFiltered)
 dfAITAFiltered = pd.DataFrame(AITAFiltered)
