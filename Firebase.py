@@ -28,18 +28,6 @@ def reddit_auth():
     )
     return reddit_instance
 
-# def getReply(reply, re):
-#     if len(reply.replies)<1:
-#         if hasattr(reply,"author") and reply.author!=None:
-#             return re
-#     else:
-#         for rs in reply.replies:
-#             if hasattr(rs, "author") and rs.author != None:
-#                 r = {"reply_author": rs.author.name, "reply_body": rs.body, "reply_ups": rs.ups,
-#                  "reply": []}
-#         re["reply"].append(getReply(rs, r))
-#         return re
-
 def scrape_data(reddit):
     subreddit = reddit.subreddit("AITAFiltered")
     counter = 1
@@ -105,12 +93,6 @@ def scrape_data(reddit):
             if top_level_comment.author == None:
                 continue
 
-            # for reply in top_level_comment.replies:
-            #     if reply.author ==None:
-            #         continue
-            #     re = {"reply_author":reply.author.name,"reply_body":reply.body,"reply_ups":reply.ups,"reply":[]}
-                # com_info["reply"].append(getReply(reply,re))
-                # print(com_info["reply"])
             if "NTA" in top_level_comment.body:
                 if top_level_comment.ups > 0:
                     total_votes += top_level_comment.ups
