@@ -3,8 +3,10 @@ import pandas as pd
 df = pd.read_csv("Posts_Raw.csv")
 df = df.assign(Post_url='https://www.reddit.com'+df['Original_Post'])
 JudgementForm = []
-for a in range(len(df['JudgementForm'].tolist())):
+for a in range(0, 1):
     JudgementForm.append([item.replace("'","") for item in df['JudgementForm'].tolist()[a][1:-1].split(", ")][2:])
+    print(df['JudgementForm'].tolist()[a][1:-1])
+    print(df['JudgementForm'].tolist()[a][1:-1].split(", "))
 for a in range(len(JudgementForm)):
     temp = []
     for b in range(len(JudgementForm[a])):

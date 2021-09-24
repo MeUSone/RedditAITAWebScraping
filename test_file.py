@@ -1,6 +1,7 @@
 import praw
 from dotenv import load_dotenv
 import os
+from bs4 import BeautifulSoup
 
 load_dotenv()
 
@@ -11,14 +12,40 @@ reddit = praw.Reddit(
     username=os.environ.get("username"),
     password=os.environ.get("password")
 )
+submission = reddit.submission(
+    url="https://www.reddit.com/r/AmItheAsshole/comments/ptm80l/aita_for_telling_my_coworker_that_its_not_my/")
 
-submission = reddit.submission(url="https://www.reddit.com/r/AmItheAsshole/comments/prgv6a/aita_for_calling_my_boyfriend_a_bum_in_front_of/")
+total_votes = 0
+judgement = {"NTA": 0, "YTA": 0, "NAH": 0, "INFO": 0, "ESH": 0}
 
-submission.comments.replace_more(limit=None)
-comment_queue = submission.comments[:]
-while comment_queue:
-    comment = comment_queue.pop(0)
-    if comment.author == "Judgement_Bot_AITA":
+for top_level_comment in submission.comments:
+    if hasattr(top_level_comment, "body") == False:
         continue
-    print(comment.body)
-    comment_queue.extend(comment.replies)
+    if "NTA" in top_level_comment.body:
+        if top_level_comment.ups > 0:
+            total_votes += top_level_comment.ups
+            judgement["NTA"] += top_level_comment.ups
+    elif "YTA" in top_level_comment.body:
+        if top_level_comment.ups > 0:
+            total_votes += top_level_comment.ups
+            judgement["YTA"] += top_level_comment.ups
+    elif "NAH" in top_level_comment.body:
+        if top_level_comment.ups > 0:
+            total_votes += top_level_comment.ups
+            judgement["NAH"] += top_level_comment.ups
+    elif "INFO" in top_level_comment.body:
+        if top_level_comment.ups > 0:
+            total_votes += top_level_comment.ups
+            judgement["INFO"] += top_level_comment.ups
+    elif "ESH" in top_level_comment.body:
+        if top_level_comment.ups > 0:
+            total_votes += top_level_comment.ups
+            judgement["ESH"] += top_level_comment.ups
+
+custom_score = {"YTA": judgement["YTA"] / total_votes,
+                "NTA": judgement["NTA"] / total_votes,
+                "ESH": judgement["ESH"] / total_votes,
+                "NAH": judgement["NAH"] / total_votes,
+                "INFO": judgement["INFO"] / total_votes}
+
+print(custom_score)

@@ -16,13 +16,12 @@ reddit = praw.Reddit(
 
 subreddit = reddit.subreddit("AITAFiltered")
 AITAFiltered = []
+counter = 1
 for submission in subreddit.hot(limit=2):
 
     # Get rid of the rule post
     if submission.stickied:
         continue
-    # print(submission.url)
-    # print(vars(submission))
 
     # Get rid of the deleted posts
     if submission.crosspost_parent_list[0]['selftext'] == '[deleted]':
@@ -31,29 +30,29 @@ for submission in subreddit.hot(limit=2):
     # Get rid of the posts posted twice
     if len(submission.comments) < 1:
         continue
-    cleanText = BeautifulSoup(submission.comments[0].body_html, "lxml").text
 
+    clean_text = BeautifulSoup(submission.comments[0].body_html, "lxml").text
     # Get rid of the posts that do not have a judgement form
-    if "The final verdict" not in cleanText:
+    if "The final verdict" not in clean_text:
         continue
 
-    # Get the judgement from from HTML to string fromat and get the label
-    cleanText = cleanText.replace("\n", " ").split("  ")
-    # print(cleanText)
-    del cleanText[2]
-    AITAFiltered.append({"Original_Post": submission.url, "JudgementForm": cleanText,
-                         "FinalResult": cleanText[0].split(":")[1]})
+    post_info = {counter: {"post_id": submission.id, "title": submission.title, "date": submission.created_utc,
+                           "url": submission.url, "flair": submission.link_flair_text,
+                           "scores_judgement_bot": {"YTA": 0, "NTA": 0, "ESH": 0, "NAH": 0, "INFO": 0},
+                           "scores_custom": {"YTA": 0, "NTA": 0, "ESH": 0, "NAH": 0, "INFO": 0}, "comments": []}}
 
-    # print(cleanText)
-    # data = {}
-    #
-    # for i in range(0, len(cleanText)):
-    #     print(cleanText[i][0:cleanText[i].index(" ")])
-    #     if "NTA" in cleanText[i] or "YTA" in cleanText[i] or "ESH" in cleanText[i] or "NAH" in cleanText[i] or "INFO" in cleanText[i]:
-    #         data[cleanText[i][0:cleanText[i].index(" ")]] = cleanText[i][cleanText[i].index(" ")+1:len(cleanText[i])-1]
-    #
-    # print(data)
+    clean_text = clean_text.replace("\n", " ").split("  ")
+    del clean_text[2]
+    clean_text = clean_text[2:-1]
+    cleaned_text_list = []
+    for b in range(0, len(clean_text)):
+        cleaned_text_list.append(clean_text[b].strip()[:-1].split(" "))
 
-# print(AITAFiltered)
-dfAITAFiltered = pd.DataFrame(AITAFiltered)
-dfAITAFiltered.to_csv('Posts_Raw.csv')
+    for i in cleaned_text_list:
+        post_info[counter]["scores_judgement_bot"][i[0]] = int(i[1])
+
+
+#
+# # print(AITAFiltered)
+# dfAITAFiltered = pd.DataFrame(AITAFiltered)
+# dfAITAFiltered.to_csv('Posts_Raw.csv')
