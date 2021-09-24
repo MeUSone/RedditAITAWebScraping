@@ -97,7 +97,7 @@ def scrape_data():
 
         date = '{0.month}/{0.day}/{0.year}'.format(datetime.datetime.utcfromtimestamp(submission.created_utc))
 
-        ref.push({"INT_ID": {"post_id": submissionOriginal.author.name, "title": submission.title, "date": date, "url": 'https://www.reddit.com'+submission.url,
+        ref.push({"INT_ID": {"post_id": submissionOriginal.author.name, "title": submission.title, "date": date, "url": 'https://www.reddit.com'+submission.url,"story":submissionOriginal.selftext,
 "flair": cleanText[0].split(":")[1], "scoresFromAITAFiltered": JudgementForm,"scoresCustom": custom_score,"comments": []}})
 
 
