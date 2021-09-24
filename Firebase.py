@@ -6,6 +6,9 @@ import os
 import json
 import praw
 import datetime
+from psaw import PushshiftAPI
+
+api = PushshiftAPI()
 
 
 def initialize_firebase():
@@ -40,13 +43,18 @@ def reddit_auth():
 def scrape_data(reddit):
     subreddit = reddit.subreddit("AITAFiltered")
     counter = 1
-    for submission in subreddit.hot(limit=100):
+    results = list(api.search_submissions(subreddit='AITAFiltered',limit=2))
+    # for submission in subreddit.hot(limit=100000):
 
+    for result in results:
+
+        submission = reddit.submission(url=result.full_link)
         # Get rid of the rule post
+
         if submission.stickied:
             continue
 
-        # Get rid of the deleted posts
+        #Get rid of the deleted posts
         if submission.crosspost_parent_list[0]['selftext'] == '[deleted]':
             continue
 
@@ -79,13 +87,24 @@ def scrape_data(reddit):
 
         total_votes = 0
         judgement = {"NTA": 0, "YTA": 0, "NAH": 0, "INFO": 0, "ESH": 0}
-        submission_aita.comments.replace_more(limit=0)
+        submission_aita.comments.replace_more(limit=None)
+        comment_queue = submission_aita.comments[:]
+        while comment_queue:
+            comment = comment_queue.pop(0)
+            if comment.author == "Judgement_Bot_AITA":
+                continue
+            if comment.author == None:
+                continue
+            post_info[counter]["comments"].append ({"comment_author": comment.author.name, "comment_body": comment.body,
+                        "comment_ups": comment.ups})
+            comment_queue.extend(comment.replies)
+
         for top_level_comment in submission_aita.comments:
             if not hasattr(top_level_comment, "body"):
                 continue
             if top_level_comment.author == None:
                 continue
-            com_info = {"comment_author":top_level_comment.author.name,"comment_body":top_level_comment.body,"comment_ups":top_level_comment.ups,"reply":[]}
+
             # for reply in top_level_comment.replies:
             #     if reply.author ==None:
             #         continue
@@ -96,28 +115,23 @@ def scrape_data(reddit):
                 if top_level_comment.ups > 0:
                     total_votes += top_level_comment.ups
                     judgement["NTA"] += top_level_comment.ups
-                    com_info["label"]="NTA"
+
             elif "YTA" in top_level_comment.body:
                 if top_level_comment.ups > 0:
                     total_votes += top_level_comment.ups
                     judgement["YTA"] += top_level_comment.ups
-                    com_info["label"] = "YTA"
             elif "NAH" in top_level_comment.body:
                 if top_level_comment.ups > 0:
                     total_votes += top_level_comment.ups
                     judgement["NAH"] += top_level_comment.ups
-                    com_info["label"] = "NAH"
             elif "INFO" in top_level_comment.body:
                 if top_level_comment.ups > 0:
                     total_votes += top_level_comment.ups
                     judgement["INFO"] += top_level_comment.ups
-                    com_info["label"] = "INFO"
             elif "ESH" in top_level_comment.body:
                 if top_level_comment.ups > 0:
                     total_votes += top_level_comment.ups
                     judgement["ESH"] += top_level_comment.ups
-                    com_info["label"] = "ESH"
-            post_info[counter]["comments"].append(com_info)
         post_info[counter]["scores_custom"] = {"YTA": round((judgement["YTA"] / total_votes) * 100, 3),
                                                "NTA": round((judgement["NTA"] / total_votes) * 100, 3),
                                                "ESH": round((judgement["ESH"] / total_votes) * 100, 3),
@@ -127,8 +141,8 @@ def scrape_data(reddit):
         post_info[counter]["body"] = submission_aita.selftext
 
         ref = db.reference()
-        ref.push(post_info)
-
+        #ref.push(post_info)
+        print(post_info)
         counter += 1
 
 
@@ -136,4 +150,6 @@ if __name__ == '__main__':
     load_dotenv("/Users/jiayifu/Desktop/NLP2021Fall/RedditAITAWebScraping/ATT23877.env")
     initialize_firebase()
     reddit = reddit_auth()
+    api = PushshiftAPI()
     scrape_data(reddit)
+
