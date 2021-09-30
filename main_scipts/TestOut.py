@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import os
 import ast
 
-load_dotenv("/Users/jiayifu/Desktop/NLP2021Fall/RedditAITAWebScraping/ATT23877.env")
+load_dotenv()
 
 reddit = praw.Reddit(
     client_id=os.environ.get("client_id"),

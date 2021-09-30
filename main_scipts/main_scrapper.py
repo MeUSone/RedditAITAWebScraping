@@ -62,7 +62,7 @@ def scrape_data(reddit):
         post_info = {"post_id": submission.id, "title": submission.title,
                                "date": '{0.month}/{0.day}/{0.year}'.format(datetime.datetime.utcfromtimestamp(submission.created_utc)),
                                "url": "https://www.reddit.com" + original_submission.url,
-                               "flair": original_submission.link_flair_text, "body": "",
+                               "flair": original_submission.link_flair_text.strip(), "body": "",
                                "scores_judgement_bot": {"YTA": 0, "NTA": 0, "ESH": 0, "NAH": 0, "INFO": 0},
                                "scores_custom": {}, "comments": []}
 
