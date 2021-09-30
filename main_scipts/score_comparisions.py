@@ -36,7 +36,7 @@ for i in range(1, x+1):
     if max_scores_judgement_bot == mapped_flair:
         average_j_f += 1
 
-print("custom algorithm + flair: " + str(average_c_f/x))
-print("custom algorithm + judgement form score: " + str(average_c_j/x))
-print("judgement form score + flair: " + str(average_j_f/x))
+print("custom algorithm + flair: " + str(round((average_c_f/x)*100)))
+print("custom algorithm + judgement form score: " + str(round(average_c_j/x)*100))
+print("judgement form score + flair: " + str(round(average_j_f/x)*100))
 
