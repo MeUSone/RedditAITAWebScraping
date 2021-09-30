@@ -6,3 +6,12 @@ comments: []}}
 # get comments
 # run script massively
 # kendall correlation script
+
+
+TO-DO LIST
+- Fix the data structure
+    - Change the key to something readable and then push my json data on top
+    - work on comments
+    - get flair
+- Understand how to append information to the firebase DB
+- Retrieve information about scores
