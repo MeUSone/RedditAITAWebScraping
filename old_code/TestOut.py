@@ -16,7 +16,7 @@ reddit = praw.Reddit(
 )
 
 
-df = pd.read_csv("../old_code/Post.csv")
+df = pd.read_csv("Post.csv")
 def cleanForm(cleanText):
     cleanText = ast.literal_eval(cleanText)
     JudgementForm = {}

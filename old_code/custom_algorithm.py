@@ -1,15 +1,15 @@
 import pandas as pd
-import praw
+import praw, os
 import numpy as np
 
 df = pd.read_csv("Post_Cleaned.csv")
 
 reddit = praw.Reddit(
-    client_id="BBADp-gSLgP2aeQyVh-Q9A",
-    client_secret="WfdBLPPxj1rrlK6vmQTJKzGGO_cYtg",
+    client_id=os.environ.get("client_id"),
+    client_secret=os.environ.get("client_secret"),
     user_agent="my user agent",
-    username="llama0627",
-    password="Aa87287230",
+    username=os.environ.get("username"),
+    password=os.environ.get("password")
 )
 
 data_reddit = [[]]*len(df.index)
