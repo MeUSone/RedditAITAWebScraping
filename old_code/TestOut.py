@@ -15,7 +15,7 @@ reddit = praw.Reddit(
     password=os.environ.get("password")
 )
 
-
+dict_links = {"customized/flair": "", "customized/judgement": "", "judgement_form/flair": ""}
 df = pd.read_csv("Post.csv")
 def cleanForm(cleanText):
     cleanText = ast.literal_eval(cleanText)

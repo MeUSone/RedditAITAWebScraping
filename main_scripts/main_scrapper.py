@@ -10,6 +10,7 @@ from psaw import PushshiftAPI
 
 api = PushshiftAPI()
 
+# implement hashing in order to make sure we don't duplicate ids
 
 def initialize_firebase():
     creds = credentials.Certificate(json.loads(os.environ.get("firebase_auth")))
