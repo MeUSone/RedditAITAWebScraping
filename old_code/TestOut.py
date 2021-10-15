@@ -16,7 +16,7 @@ reddit = praw.Reddit(
 )
 
 dict_links = {"customized/flair": "", "customized/judgement": "", "judgement_form/flair": ""}
-df = pd.read_csv("Post.csv")
+df = pd.read_csv("post_new.csv")
 def cleanForm(cleanText):
     cleanText = ast.literal_eval(cleanText)
     JudgementForm = {}

@@ -1,3 +1,5 @@
+import operator
+
 import firebase_admin
 from bs4 import BeautifulSoup
 from firebase_admin import credentials, db
@@ -10,14 +12,6 @@ from psaw import PushshiftAPI
 
 api = PushshiftAPI()
 
-# implement hashing in order to make sure we don't duplicate ids
-
-def initialize_firebase():
-    creds = credentials.Certificate(json.loads(os.environ.get("firebase_auth")))
-    firebase_admin.initialize_app(creds, {
-        'databaseURL': 'https://social-acceptance-fc45b-default-rtdb.firebaseio.com/'
-    })
-
 
 def reddit_auth():
     reddit_instance = praw.Reddit(
@@ -29,11 +23,12 @@ def reddit_auth():
     )
     return reddit_instance
 
+
 def scrape_data(reddit):
-    subreddit = reddit.subreddit("AITAFiltered")
+    limit = 2
     counter = 1
-    results = list(api.search_submissions(subreddit='AITAFiltered',limit=1))
-    # for submission in subreddit.hot(limit=100000):
+    reddit_data = {}
+    results = list(api.search_submissions(subreddit='AITAFiltered', limit=limit))
 
     for result in results:
 
@@ -43,7 +38,7 @@ def scrape_data(reddit):
         if submission.stickied:
             continue
 
-        #Get rid of the deleted posts
+        # Get rid of the deleted posts
         if submission.crosspost_parent_list[0]['selftext'] == '[deleted]':
             continue
 
@@ -61,11 +56,12 @@ def scrape_data(reddit):
         original_submission = reddit.submission(url=original_url)
 
         post_info = {"post_id": submission.id, "title": submission.title,
-                               "date": '{0.month}/{0.day}/{0.year}'.format(datetime.datetime.utcfromtimestamp(submission.created_utc)),
-                               "url": "https://www.reddit.com" + original_submission.url,
-                               "flair": original_submission.link_flair_text.strip(), "body": "",
-                               "scores_judgement_bot": {"YTA": 0, "NTA": 0, "ESH": 0, "NAH": 0, "INFO": 0},
-                               "scores_custom": {}, "comments": []}
+                     "date": '{0.month}/{0.day}/{0.year}'.format(
+                         datetime.datetime.utcfromtimestamp(submission.created_utc)),
+                     "url": original_submission.url,
+                     "flair": original_submission.link_flair_text.strip(), "body": "",
+                     "scores_judgement_bot": {"YTA": 0, "NTA": 0, "ESH": 0, "NAH": 0, "INFO": 0},
+                     "scores_custom": {}, "comments": []}
 
         clean_text = clean_text.replace("\n", " ").split("  ")
         del clean_text[2]
@@ -79,9 +75,6 @@ def scrape_data(reddit):
 
         submission_aita = reddit.submission(url=post_info["url"])
 
-        total_votes = 0
-        judgement = {"NTA": 0, "YTA": 0, "NAH": 0, "INFO": 0, "ESH": 0}
-
         submission_aita.comments.replace_more(limit=None)
         comment_queue = [[x, 'TOP-LEVEL COMMENT', 'TOP-LEVEL COMMENT'] for x in submission_aita.comments[:]]
         while comment_queue:
@@ -90,55 +83,57 @@ def scrape_data(reddit):
                 continue
             post_info["comments"].append({"comment_id": comment[0].id, "comment_author": comment[0].author.name,
                                           "comment_body": comment[0].body, "comment_ups": comment[0].ups,
-                                          "parent_id": comment[1],
+                                          "parent_comment_id": comment[1],
                                           "parent_author": comment[2]})
             comment_queue.extend([[x, comment[0].id, comment[0].author.name] for x in comment[0].replies])
 
+        judgement = {"NTA": 0, "YTA": 0, "NAH": 0, "INFO": 0, "ESH": 0}
         for top_level_comment in submission_aita.comments:
-            if not hasattr(top_level_comment, "body"):
+            if not hasattr(top_level_comment, "body") or top_level_comment.author is None:
                 continue
-            if top_level_comment.author == None:
-                continue
-
-            if "NTA" in top_level_comment.body:
+            comment = top_level_comment.body.upper()
+            if "NTA" in comment:
                 if top_level_comment.ups > 0:
-                    total_votes += top_level_comment.ups
-                    judgement["NTA"] += top_level_comment.ups
-
-            elif "YTA" in top_level_comment.body:
+                    judgement["NTA"] = max(top_level_comment.ups, judgement["NTA"])
+            elif "YTA" in comment:
                 if top_level_comment.ups > 0:
-                    total_votes += top_level_comment.ups
-                    judgement["YTA"] += top_level_comment.ups
-            elif "NAH" in top_level_comment.body:
+                    judgement["YTA"] = max(top_level_comment.ups, judgement["YTA"])
+            elif "NAH" in comment:
                 if top_level_comment.ups > 0:
-                    total_votes += top_level_comment.ups
-                    judgement["NAH"] += top_level_comment.ups
-            elif "INFO" in top_level_comment.body:
+                    judgement["NAH"] = max(top_level_comment.ups, judgement["NAH"])
+            elif "INFO" in comment:
                 if top_level_comment.ups > 0:
-                    total_votes += top_level_comment.ups
-                    judgement["INFO"] += top_level_comment.ups
-            elif "ESH" in top_level_comment.body:
+                    judgement["INFO"] = max(top_level_comment.ups, judgement["INFO"])
+            elif "ESH" in comment:
                 if top_level_comment.ups > 0:
-                    total_votes += top_level_comment.ups
-                    judgement["ESH"] += top_level_comment.ups
-        post_info["scores_custom"] = {"YTA": round((judgement["YTA"] / total_votes) * 100),
-                                               "NTA": round((judgement["NTA"] / total_votes) * 100),
-                                               "ESH": round((judgement["ESH"] / total_votes) * 100),
-                                               "NAH": round((judgement["NAH"] / total_votes) * 100),
-                                               "INFO": round((judgement["INFO"] / total_votes) * 100)}
+                    judgement["ESH"] = max(top_level_comment.ups, judgement["ESH"])
+        total_votes = sum(judgement.values())
+        post_info["scores_custom"] = {"NTA": round((judgement["NTA"] / total_votes) * 100),
+                                      "YTA": round((judgement["YTA"] / total_votes) * 100),
+                                      "NAH": round((judgement["NAH"] / total_votes) * 100),
+                                      "INFO": round((judgement["INFO"] / total_votes) * 100),
+                                      "ESH": round((judgement["ESH"] / total_votes) * 100)}
 
         post_info["body"] = submission_aita.selftext
 
-        print(post_info)
-        ref = db.reference()
-        ref.child(str(counter)).push(post_info)
+        flair_map = {"Not the A-hole": "NTA", "Asshole": "YTA", "Not Enough Info": "INFO",
+                                         "Everyone Sucks": "ESH", "No A-holes": "NAH"}
+        converted_flair = flair_map[post_info["flair"]]
+        customized_vote = max(post_info["scores_custom"], key=post_info["scores_custom"].get)
+        judgement_form_vote = max(post_info["scores_judgement_bot"], key=post_info["scores_judgement_bot"].get)
+
+        post_info["customized_algorithm/flair"] = converted_flair == customized_vote
+        post_info["customized_algorithm/judgement_form"] = customized_vote == judgement_form_vote
+        post_info["judgement_form/flair"] = judgement_form_vote == converted_flair
+
+        reddit_data[counter] = post_info
         counter += 1
+
+    print(reddit_data)
 
 
 if __name__ == '__main__':
     load_dotenv()
-    initialize_firebase()
     reddit = reddit_auth()
     api = PushshiftAPI()
     scrape_data(reddit)
-
