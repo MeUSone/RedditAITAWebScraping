@@ -9,7 +9,7 @@ from transformers import AutoModel, BertTokenizerFast
 import json
 import matplotlib.pyplot as plt
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
-from sklearn.utils.class_weight import compute_class_weight
+import gc
 
 # specify GPU
 device = torch.device("cuda")
@@ -100,7 +100,7 @@ test_mask = torch.tensor(tokens_test['attention_mask'])
 test_y = torch.tensor(test_labels.tolist())
 
 #define a batch size
-batch_size = 4
+batch_size = 1
 
 # wrap tensors
 train_data = TensorDataset(train_seq, train_mask, train_y)
@@ -120,6 +120,9 @@ val_sampler = SequentialSampler(val_data)
 # dataLoader for validation set
 val_dataloader = DataLoader(val_data, sampler = val_sampler, batch_size=batch_size)
 
+# freeze all the parameters
+for param in bert.parameters():
+    param.requires_grad = False
 
 class BERT_Arch(nn.Module):
 
@@ -213,7 +216,7 @@ def train():
         loss = cross_entropy(preds, labels)
 
         # add on to the total loss
-        total_loss = total_loss + loss.item()
+        total_loss += float(loss.item())
 
         # backward pass to calculate the gradients
         loss.backward()
@@ -276,7 +279,7 @@ def evaluate():
             # compute the validation loss between actual and predicted values
             loss = cross_entropy(preds, labels)
 
-            total_loss = total_loss + loss.item()
+            total_loss += float(loss.item())
 
             preds = preds.detach().cpu().numpy()
 
@@ -320,6 +323,8 @@ for epoch in range(epochs):
 
     print(f'\nTraining Loss: {train_loss:.3f}')
     print(f'Validation Loss: {valid_loss:.3f}')
+    gc.collect()
+    torch.cuda.empty_cache()
 
 #load weights of best model
 path = 'saved_weights.pt'
