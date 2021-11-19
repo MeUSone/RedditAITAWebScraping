@@ -9,6 +9,7 @@ from transformers import AutoModel, BertTokenizerFast
 import json
 import matplotlib.pyplot as plt
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
+from sklearn.utils.class_weight import compute_class_weight
 import gc
 
 # specify GPU
@@ -144,7 +145,7 @@ class BERT_Arch(nn.Module):
         self.fc2 = nn.Linear(512, 5)
 
         # softmax activation function
-        self.softmax = nn.LogSoftmax()
+        self.softmax = nn.Softmax(dim=1)
 
     # define the forward pass
     def forward(self, sent_id, mask):
@@ -177,9 +178,20 @@ from transformers import AdamW
 # define the optimizer
 optimizer = AdamW(model.parameters(), lr = 1e-5)          # learning rate
 
+#compute the class weights
+class_weights = compute_class_weight(class_weight='balanced',classes=np.unique(train_labels),y=train_labels)
+
+print("Class Weights:",class_weights)
+
+# converting list of class weights to a tensor
+weights= torch.tensor(class_weights,dtype=torch.float)
+
+# push to GPU
+weights = weights.to(device)
+
 
 # define the loss function
-cross_entropy  = nn.NLLLoss()
+cross_entropy  = nn.NLLLoss(weight=weights)
 
 # number of training epochs
 epochs = 10
@@ -323,8 +335,6 @@ for epoch in range(epochs):
 
     print(f'\nTraining Loss: {train_loss:.3f}')
     print(f'Validation Loss: {valid_loss:.3f}')
-    gc.collect()
-    torch.cuda.empty_cache()
 
 #load weights of best model
 path = 'saved_weights.pt'
@@ -335,7 +345,9 @@ with torch.no_grad():
   preds = model(test_seq.to(device), test_mask.to(device))
   preds = preds.detach().cpu().numpy()
 
+print(preds)
 preds = np.argmax(preds, axis = 1)
+print(preds)
 print(classification_report(test_y, preds))
 
 
